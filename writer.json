@@ -1,0 +1,373 @@
+{
+  "name": "writer",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "incident_description"
+            },
+            {
+              "name": "approved_plan"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c9c2fe74-03bb-4e66-b80c-4643ad926e3b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da3907e0-723f-4713-b661-5559ec1e2561",
+              "name": "incident_description",
+              "value": "={{ $json.incident_description }}",
+              "type": "string"
+            },
+            {
+              "id": "642bed96-99f4-4377-b36d-d47cb80e3684",
+              "name": "attempt",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "af03e3a9-086b-4a9c-afb7-c07f6914b5ab",
+              "name": "feedback",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "7c13eb39-216a-4f25-bee0-9105c59e5897",
+              "name": "approved_plan",
+              "value": "={{ $json.approved_plan }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "15216300-2085-4149-af60-a81a31ffdd7a",
+      "name": "init"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=أنت مراجع جودة للأوراق العلمية المكتوبة.\n\nالورقة المقدَّمة:\n{{ $json.text }}\n\nارفض الورقة إذا:\n- ذكرت مرجعاً أو اسم باحث أو إحصائية دون أساس\n- استخدمت لغة إنشائية بدل لغة علمية\n- كرّرت نفس المعلومة في أكثر من قسم\n- نقص منها أي قسم من الهيكل المعتمد\n\nأعد النتيجة بصيغة JSON فقط، بدون markdown:\n{\"approved\": true أو false, \"missing\": [], \"feedback\": \"\"}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        704,
+        128
+      ],
+      "id": "9ef4f10f-ccc9-4b19-b29e-082f787b0dc7",
+      "name": "checker"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"approved\": false,\n  \"missing\": [\"Action Items\"],\n  \"feedback\": \"أضف مسؤولاً لكل بند في Action Items\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        336
+      ],
+      "id": "ea7aaed6-5a9c-49ac-9fc5-85e518f7256e",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6b2bb4a2-0a81-4c6b-91c7-682c25ec8bcd",
+              "leftValue": "={{ $json.output.approved === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        336
+      ],
+      "id": "663b64f4-3f90-42fa-8929-13f1143152a7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ec9ad394-c78b-413d-b74b-75845c847f8c",
+              "name": "approved_plan",
+              "value": "={{ $('Writer').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1296,
+        240
+      ],
+      "id": "1c2906bc-00e3-4dfa-a92f-94f9ae65ec43",
+      "name": "Output"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f0d08c0-fd7a-4a43-8912-7e718a03b413",
+              "name": "incident_description",
+              "value": "={{ $('init').item.json.incident_description }}",
+              "type": "string"
+            },
+            {
+              "id": "385e82c9-74d2-44df-b860-12573a16ea32",
+              "name": "attempt",
+              "value": "={{ $('init').item.json.attempt + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "0becf815-905e-4d2d-88d7-cb8c4674a0bd",
+              "name": "feedback",
+              "value": "={{ $json.output.feedback }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1296,
+        432
+      ],
+      "id": "abb2a1d4-2ad2-470d-9fb2-0c29a8e8f86c",
+      "name": "Retry"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=أنت كاتب أوراق علمية.\n\nالهيكل المعتمد الذي يجب أن تلتزم به حرفياً:\n{{ $json.approved_plan }}\n\nموضوع البحث:\n{{ $json.incident_description }}\n\nملاحظات المراجع على محاولتك السابقة (إن وُجدت):\n{{ $json.feedback }}\n\nاكتب الورقة كاملة بفقرات مكتملة تحت كل قسم.\n\nقواعد إلزامية:\n- استخدم لغة علمية رصينة\n- لا تخترع إحصائيات أو أسماء باحثين أو مراجع\n- إذا احتجت رقماً غير متأكد منه، اكتب صيغة عامة بدلاً منه\n- لا تكرر نفس المعلومة في أكثر من قسم\n- لا تتجاوز 500 كلمة",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        480,
+        -80
+      ],
+      "id": "7aca56bf-266a-45c0-80b2-54b733c04c13",
+      "name": "Writer"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        416,
+        128
+      ],
+      "id": "51242063-f0a2-46e6-907c-9675e6f627aa",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "g0iDkEvsZRQD1jS0",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        592,
+        336
+      ],
+      "id": "b268085e-d280-48d2-9cfa-58eaff33a60f",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "g0iDkEvsZRQD1jS0",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init": {
+      "main": [
+        [
+          {
+            "node": "Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "checker",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry": {
+      "main": [
+        [
+          {
+            "node": "Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checker": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writer": {
+      "main": [
+        [
+          {
+            "node": "checker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "checker",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 120
+  },
+  "versionId": "acf14125-d5cf-4508-9a33-3315a604f83f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d56b0a41c29f1b8c1a9cbf456e97da678da41decac36bb10fc9e57625a37987a"
+  },
+  "nodeGroups": [],
+  "id": "oBAhFVv6YSHIf6Su",
+  "tags": []
+}
