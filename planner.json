@@ -1,0 +1,364 @@
+{
+  "name": "planner",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "incident_description"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ff760c9b-939b-42eb-8942-6d56b28d74c0",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "da3907e0-723f-4713-b661-5559ec1e2561",
+              "name": "incident_description",
+              "value": "={{ $json.incident_description }}",
+              "type": "string"
+            },
+            {
+              "id": "642bed96-99f4-4377-b36d-d47cb80e3684",
+              "name": "attempt",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "af03e3a9-086b-4a9c-afb7-c07f6914b5ab",
+              "name": "feedback",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "051f483f-4c07-4170-94ad-0503a4abad76",
+      "name": "init"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=أنت Planner متخصص في تخطيط الأوراق العلمية.\nمهمتك: بناء هيكل الورقة فقط — لا تكتب المحتوى.\n\nموضوع البحث:\n{{ $json.incident_description }}\n\nملاحظات المراجع على محاولتك السابقة (إن وُجدت):\n{{ $json.feedback }}\n\nأخرج هيكلاً يحتوي على:\nTitle\nIntroduction\nBullet points\nBody: خلفية نظرية، المفاهيم الأساسية، التطبيقات، التحديات\nConclusion\n\nتحت كل قسم اكتب سطرين يوضحان ما سيُغطى فيه.\nلا تكتب فقرات كاملة — هذا هيكل فقط.",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        480,
+        -80
+      ],
+      "id": "b161581a-48eb-4d4f-8b68-25a680c16414",
+      "name": "Planner"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=أنت مراجع جودة لهياكل الأوراق العلمية.\n\nالهيكل المقدَّم:\n{{ $json.text }}\n\nتحقق من وجود هذه الأقسام إلزامياً:\nIntroduction, خلفية نظرية, المفاهيم الأساسية, التطبيقات, التحديات, Conclusion\n\nارفض الهيكل إذا:\n- نقص أي قسم\n- قسم المفاهيم الأساسية لا يذكر مفاهيم محددة بالاسم\n- الهيكل سطحي ولا يعكس عمقاً علمياً\n\nأعد النتيجة بصيغة JSON فقط، بدون markdown:\n{\"approved\": true أو false, \"missing\": [], \"feedback\": \"\"}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        704,
+        128
+      ],
+      "id": "95ff734a-f2eb-4b19-8ecd-ae817b40521f",
+      "name": "checker"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"approved\": false,\n  \"missing\": [\"Action Items\"],\n  \"feedback\": \"أضف مسؤولاً لكل بند في Action Items\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        336
+      ],
+      "id": "252c8b43-1058-4c10-82ad-1f5d7dba378f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6b2bb4a2-0a81-4c6b-91c7-682c25ec8bcd",
+              "leftValue": "={{ $json.output.approved === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        336
+      ],
+      "id": "08484e74-1594-48d5-87a9-a23e98c1dcc8",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ec9ad394-c78b-413d-b74b-75845c847f8c",
+              "name": "approved_plan",
+              "value": "={{ $('Planner').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1296,
+        240
+      ],
+      "id": "a485430e-1635-44f8-a5cd-451cd6484cfa",
+      "name": "Output"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f0d08c0-fd7a-4a43-8912-7e718a03b413",
+              "name": "incident_description",
+              "value": "={{ $('init').item.json.incident_description }}",
+              "type": "string"
+            },
+            {
+              "id": "385e82c9-74d2-44df-b860-12573a16ea32",
+              "name": "attempt",
+              "value": "={{ $('init').item.json.attempt + 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "0becf815-905e-4d2d-88d7-cb8c4674a0bd",
+              "name": "feedback",
+              "value": "={{ $json.output.feedback }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1296,
+        432
+      ],
+      "id": "ad6272e3-efcd-420d-9346-bb4e3acc8b06",
+      "name": "Retry"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        464,
+        160
+      ],
+      "id": "78b6eb16-43d4-4fac-ae38-81392d30aae9",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "g0iDkEvsZRQD1jS0",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        592,
+        336
+      ],
+      "id": "0b818541-0830-4fbe-a351-827c51bd54e9",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "g0iDkEvsZRQD1jS0",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "init",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "init": {
+      "main": [
+        [
+          {
+            "node": "Planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planner": {
+      "main": [
+        [
+          {
+            "node": "checker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "checker",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry": {
+      "main": [
+        [
+          {
+            "node": "Planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checker": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Planner",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "checker",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 120
+  },
+  "versionId": "1490c8be-856e-4d05-aa27-5e2dbc78f5e8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d56b0a41c29f1b8c1a9cbf456e97da678da41decac36bb10fc9e57625a37987a"
+  },
+  "nodeGroups": [],
+  "id": "K35nmDj8ATrHtmJ3",
+  "tags": []
+}
